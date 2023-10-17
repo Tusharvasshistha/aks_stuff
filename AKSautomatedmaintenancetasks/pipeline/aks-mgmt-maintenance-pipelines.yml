@@ -1,0 +1,63 @@
+# maintenance jobs
+
+schedules:
+- cron: '0 1 * * Sun'
+  displayName: Every Sunday at 1AM
+  branches:
+    include:
+    - main
+  always: true
+
+trigger: none
+
+pool:
+  name: hub-build-lin-01
+  
+jobs:
+### mgmt01 ###
+- job: mgmt01
+  displayName: "aks-uks1-hub-mgmt-01 maintenance jobs"
+  steps:
+         
+  - task: Kubernetes@1
+    displayName: kubectl login
+    inputs:
+      connectionType: Azure Resource Manager
+      azureSubscriptionEndpoint: scon-aks-uks1-hub-mgmt-01-admin
+      azureResourceGroup: rg-hub-mgmt-aks-01
+      kubernetesCluster: aks-uks1-hub-mgmt-01
+      command: login
+      useClusterAdmin: true
+      
+  - pwsh: scripts/pod-maintenance.ps1 -AKS_NAME aks-uks1-hub-mgmt-01 -NAMESPACE java-build-01
+    displayName: "Maintenance on java-build-01"
+
+  - pwsh: scripts/pod-maintenance.ps1 -AKS_NAME aks-uks1-hub-mgmt-01 -NAMESPACE win-build-01
+    displayName: "Maintenance on win-build-01"
+
+  - pwsh: scripts/pod-maintenance.ps1 -AKS_NAME aks-uks1-hub-mgmt-01 -NAMESPACE pimco-win-snprd
+    displayName: "Maintenance on pimco-win-snprd"
+
+  - pwsh: scripts/pod-maintenance.ps1 -AKS_NAME aks-uks1-hub-mgmt-01 -NAMESPACE test-build-01
+    displayName: "Maintenance on test-build-01"
+
+### mgmt02 ###
+- job: mgmt02
+  displayName: "aks-uks1-hub-mgmt-02 maintenance jobs"
+  pool:
+    name: pimco-lin-prd
+    
+  steps:
+         
+  - task: Kubernetes@1
+    displayName: kubectl login
+    inputs:
+      connectionType: Azure Resource Manager
+      azureSubscriptionEndpoint: scon-aks-uks1-hub-mgmt-02-admin
+      azureResourceGroup: rg-hub-mgmt-aks-02
+      kubernetesCluster: aks-uks1-hub-mgmt-02
+      command: login
+      useClusterAdmin: true
+      
+  - pwsh: scripts/pod-maintenance.ps1 -AKS_NAME aks-uks1-hub-mgmt-02 -NAMESPACE pimco-win-prd
+    displayName: "Maintenance in pimco-win-prd"
